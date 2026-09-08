@@ -62,3 +62,26 @@ func (r *ChunkRepository) FindByDocumentID(
 
 	return result, nil
 }
+
+func (r *ChunkRepository) FindAll(
+	ctx context.Context,
+) ([]domain.Chunk, error) {
+	if err := ctx.Err(); err != nil {
+		return nil, err
+	}
+
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+
+	total := 0
+	for _, chunks := range r.chunksByDocument {
+		total += len(chunks)
+	}
+
+	result := make([]domain.Chunk, 0, total)
+	for _, chunks := range r.chunksByDocument {
+		result = append(result, chunks...)
+	}
+
+	return result, nil
+}

@@ -12,4 +12,5 @@ type ChunkRepository interface {
 		ctx context.Context,
 		documentID string,
 	) ([]domain.Chunk, error)
+	FindAll(ctx context.Context) ([]domain.Chunk, error)
 }
