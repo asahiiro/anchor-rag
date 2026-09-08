@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/asahiiro/anchor-rag/internal/chunker"
+	"github.com/asahiiro/anchor-rag/internal/embedding"
 	"github.com/asahiiro/anchor-rag/internal/repository/memory"
 	"github.com/google/uuid"
 )
@@ -17,11 +18,16 @@ func TestDocumentServiceCreate(t *testing.T) {
 	if err != nil {
 		t.Fatalf("chunker.New() returned error: %v", err)
 	}
+	textEmbedder, err := embedding.NewRuneFrequencyEmbedder(32)
+	if err != nil {
+		t.Fatalf("embedding constructor returned error: %v", err)
+	}
 
 	service := NewDocumentService(
 		documentRepo,
 		chunkRepo,
 		textChunker,
+		textEmbedder,
 	)
 
 	doc, err := service.Create(
@@ -111,6 +117,13 @@ func TestDocumentServiceCreate(t *testing.T) {
 				wantContents[position],
 			)
 		}
+
+		if len(storedChunk.Embedding) != 32 {
+			t.Fatalf(
+				"chunk embedding dimension = %d, want 32",
+				len(storedChunk.Embedding),
+			)
+		}
 	}
 
 }
@@ -123,10 +136,16 @@ func TestDocumentServiceRejectsInvalidDocument(t *testing.T) {
 		t.Fatalf("chunker.New() returned error: %v", err)
 	}
 
+	textEmbedder, err := embedding.NewRuneFrequencyEmbedder(32)
+	if err != nil {
+		t.Fatalf("embedding constructor returned error: %v", err)
+	}
+
 	service := NewDocumentService(
 		documentRepo,
 		chunkRepo,
 		textChunker,
+		textEmbedder,
 	)
 
 	_, err = service.Create(

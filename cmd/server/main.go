@@ -5,6 +5,7 @@ import (
 
 	"github.com/asahiiro/anchor-rag/internal/application"
 	"github.com/asahiiro/anchor-rag/internal/chunker"
+	"github.com/asahiiro/anchor-rag/internal/embedding"
 	"github.com/asahiiro/anchor-rag/internal/handler"
 	"github.com/asahiiro/anchor-rag/internal/repository/memory"
 	"github.com/gin-gonic/gin"
@@ -19,10 +20,16 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
+	textEmbedder, err := embedding.NewRuneFrequencyEmbedder(256)
+	if err != nil {
+		panic(err)
+	}
+
 	service := application.NewDocumentService(
 		documentRepo,
 		chunkRepo,
 		textChunker,
+		textEmbedder,
 	)
 	documentHandler := handler.NewDocumentHandler(service)
 

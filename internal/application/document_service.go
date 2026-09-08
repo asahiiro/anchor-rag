@@ -7,27 +7,37 @@ import (
 
 	"github.com/asahiiro/anchor-rag/internal/chunker"
 	"github.com/asahiiro/anchor-rag/internal/domain"
+	"github.com/asahiiro/anchor-rag/internal/embedding"
 	"github.com/asahiiro/anchor-rag/internal/repository"
 	"github.com/google/uuid"
 )
 
-var ErrInvalidDocument = errors.New("invalid document")
+var (
+	ErrInvalidDocument = errors.New("invalid document")
+
+	ErrEmbeddingCountMismatch = errors.New(
+		"embedding count does not match chunk count",
+	)
+)
 
 type DocumentService struct {
 	documentRepo repository.DocumentRepository
 	chunkRepo    repository.ChunkRepository
 	chunker      *chunker.Chunker
+	embedder     embedding.Embedder
 }
 
 func NewDocumentService(
 	documentRepo repository.DocumentRepository,
 	chunkRepo repository.ChunkRepository,
 	textChunker *chunker.Chunker,
+	textEmbedder embedding.Embedder,
 ) *DocumentService {
 	return &DocumentService{
 		documentRepo: documentRepo,
 		chunkRepo:    chunkRepo,
 		chunker:      textChunker,
+		embedder:     textEmbedder,
 	}
 }
 
@@ -51,6 +61,25 @@ func (s *DocumentService) Create(
 
 	parts := s.chunker.Split(doc.Content)
 
+	embeddings, err := s.embedder.Embed(
+		ctx,
+		parts,
+	)
+	if err != nil {
+		return domain.Document{}, fmt.Errorf(
+			"embed chunks: %w",
+			err,
+		)
+	}
+	if len(embeddings) != len(parts) {
+		return domain.Document{}, fmt.Errorf(
+			"%w: got %d, want %d",
+			ErrEmbeddingCountMismatch,
+			len(embeddings),
+			len(parts),
+		)
+	}
+
 	chunks := make([]domain.Chunk, 0, len(parts))
 	for position, chunkContent := range parts {
 		chunks = append(chunks, domain.Chunk{
@@ -58,6 +87,7 @@ func (s *DocumentService) Create(
 			DocumentID: doc.ID,
 			Content:    chunkContent,
 			Position:   position,
+			Embedding:  embeddings[position],
 		})
 	}
 

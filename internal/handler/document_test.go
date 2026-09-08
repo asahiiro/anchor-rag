@@ -10,6 +10,7 @@ import (
 
 	"github.com/asahiiro/anchor-rag/internal/application"
 	"github.com/asahiiro/anchor-rag/internal/chunker"
+	"github.com/asahiiro/anchor-rag/internal/embedding"
 	"github.com/asahiiro/anchor-rag/internal/repository/memory"
 	"github.com/gin-gonic/gin"
 )
@@ -30,10 +31,16 @@ func newTestDocumentHandler(
 		t.Fatalf("chunker.New() returned error: %v", err)
 	}
 
+	textEmbedder, err := embedding.NewRuneFrequencyEmbedder(32)
+	if err != nil {
+		t.Fatalf("embedding constructor returned error: %v", err)
+	}
+
 	service := application.NewDocumentService(
 		documentRepo,
 		chunkRepo,
 		textChunker,
+		textEmbedder,
 	)
 
 	return NewDocumentHandler(service), documentRepo, chunkRepo
