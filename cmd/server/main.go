@@ -25,23 +25,31 @@ func main() {
 		panic(err)
 	}
 
-	service := application.NewDocumentService(
+	documentService := application.NewDocumentService(
 		documentRepo,
 		chunkRepo,
 		textChunker,
 		textEmbedder,
 	)
-	documentHandler := handler.NewDocumentHandler(service)
+	searchService := application.NewSearchService(
+		chunkRepo,
+		textEmbedder,
+	)
+
+	documentHandler := handler.NewDocumentHandler(documentService)
+	searchHandler := handler.NewSearchHandler(searchService)
 
 	router.GET("/healthz", func(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{
 			"status": "ok",
 		})
 	})
-	api := router.Group("/api")
+	api := router.Group("/api/v1")
 	api.POST("/documents", documentHandler.Create)
+	api.POST("/retrievals", searchHandler.Search)
 
 	if err := router.Run(":8080"); err != nil {
 		panic(err)
 	}
+
 }
