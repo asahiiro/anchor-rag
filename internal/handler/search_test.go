@@ -44,7 +44,7 @@ func TestSearchHandler(t *testing.T) {
 		"go.md",
 		"golang",
 	); err != nil {
-		t.Fatalf("failed to create Go ducument: %v", err)
+		t.Fatalf("failed to create Go document: %v", err)
 	}
 
 	if _, err := documentService.Create(
@@ -77,7 +77,7 @@ func TestSearchHandler(t *testing.T) {
 
 	if recorder.Code != http.StatusOK {
 		t.Fatalf(
-			"expected status %d,got %d: %s",
+			"expected status %d, got %d: %s",
 			http.StatusOK,
 			recorder.Code,
 			recorder.Body.String(),
@@ -89,12 +89,12 @@ func TestSearchHandler(t *testing.T) {
 	}
 
 	if err := json.Unmarshal(recorder.Body.Bytes(), &response); err != nil {
-		t.Fatalf("faile to decode response: %v", err)
+		t.Fatalf("failed to decode response: %v", err)
 	}
 
 	if len(response.Results) != 1 {
 		t.Fatalf(
-			"got %d results, want 1 ",
+			"got %d results, want 1",
 			len(response.Results),
 		)
 	}

@@ -53,7 +53,7 @@ func TestDocumentHandlerCreate(t *testing.T) {
 		newTestDocumentHandler(t)
 
 	router := gin.New()
-	router.POST("/api/documents", documentHandler.Create)
+	router.POST("/api/v1/documents", documentHandler.Create)
 
 	body := strings.NewReader(`{
 		"name": "rag-notes.md",
@@ -62,7 +62,7 @@ func TestDocumentHandlerCreate(t *testing.T) {
 
 	req := httptest.NewRequest(
 		http.MethodPost,
-		"/api/documents",
+		"/api/v1/documents",
 		body,
 	)
 
@@ -124,7 +124,7 @@ func TestDocumentHandlerCreateRejectsInvalidRequest(t *testing.T) {
 		newTestDocumentHandler(t)
 
 	router := gin.New()
-	router.POST("/api/documents", documentHandler.Create)
+	router.POST("/api/v1/documents", documentHandler.Create)
 
 	// 缺少必填的 content 字段。
 	body := strings.NewReader(`{
@@ -133,7 +133,7 @@ func TestDocumentHandlerCreateRejectsInvalidRequest(t *testing.T) {
 
 	req := httptest.NewRequest(
 		http.MethodPost,
-		"/api/documents",
+		"/api/v1/documents",
 		body,
 	)
 	req.Header.Set("Content-Type", "application/json")
@@ -157,7 +157,7 @@ func TestDocumentHandlerCreateRejectsBlankName(t *testing.T) {
 	documentHandler, _, _ := newTestDocumentHandler(t)
 
 	router := gin.New()
-	router.POST("/api/documents", documentHandler.Create)
+	router.POST("/api/v1/documents", documentHandler.Create)
 
 	body := strings.NewReader(`{
 		"name": "   ",
@@ -166,7 +166,7 @@ func TestDocumentHandlerCreateRejectsBlankName(t *testing.T) {
 
 	req := httptest.NewRequest(
 		http.MethodPost,
-		"/api/documents",
+		"/api/v1/documents",
 		body,
 	)
 	req.Header.Set("Content-Type", "application/json")
