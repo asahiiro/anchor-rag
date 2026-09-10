@@ -2,6 +2,7 @@ package main
 
 import (
 	"net/http"
+	"os"
 
 	"github.com/asahiiro/anchor-rag/internal/application"
 	"github.com/asahiiro/anchor-rag/internal/chunker"
@@ -20,7 +21,15 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	textEmbedder, err := embedding.NewRuneFrequencyEmbedder(256)
+	textEmbedder, err := embedding.NewFromConfig(
+		embedding.Config{
+			Provider:       os.Getenv("EMBEDDING_PROVIDER"),
+			BaseURL:        os.Getenv("EMBEDDING_BASE_URL"),
+			APIKey:         os.Getenv("EMBEDDING_API_KEY"),
+			Model:          os.Getenv("EMBEDDING_MODEL"),
+			LocalDimension: 256,
+		},
+	)
 	if err != nil {
 		panic(err)
 	}

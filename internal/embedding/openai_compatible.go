@@ -184,7 +184,7 @@ func (e *OpenAICompatibleEmbedder) Embed(
 	}
 
 	for _, found := range seen {
-		if found == false {
+		if !found {
 			return nil, ErrInvalidEmbeddingResponse
 		}
 	}
