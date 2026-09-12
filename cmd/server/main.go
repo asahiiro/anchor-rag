@@ -7,6 +7,7 @@ import (
 	"github.com/asahiiro/anchor-rag/internal/application"
 	"github.com/asahiiro/anchor-rag/internal/chunker"
 	"github.com/asahiiro/anchor-rag/internal/embedding"
+	"github.com/asahiiro/anchor-rag/internal/generation"
 	"github.com/asahiiro/anchor-rag/internal/handler"
 	"github.com/asahiiro/anchor-rag/internal/repository/memory"
 	"github.com/gin-gonic/gin"
@@ -33,6 +34,17 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
+	textGenerator, err := generation.NewFromConfig(
+		generation.Config{
+			Provider: os.Getenv("GENERATION_PROVIDER"),
+			BaseURL:  os.Getenv("GENERATION_BASE_URL"),
+			APIKey:   os.Getenv("GENERATION_API_KEY"),
+			Model:    os.Getenv("GENERATION_MODEL"),
+		},
+	)
+	if err != nil {
+		panic(err)
+	}
 
 	documentService := application.NewDocumentService(
 		documentRepo,
@@ -44,9 +56,14 @@ func main() {
 		chunkRepo,
 		textEmbedder,
 	)
+	answerService := application.NewAnswerService(
+		searchService,
+		textGenerator,
+	)
 
 	documentHandler := handler.NewDocumentHandler(documentService)
 	searchHandler := handler.NewSearchHandler(searchService)
+	answerHandler := handler.NewAnswerHandler(answerService)
 
 	router.GET("/healthz", func(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{
@@ -56,6 +73,7 @@ func main() {
 	api := router.Group("/api/v1")
 	api.POST("/documents", documentHandler.Create)
 	api.POST("/retrievals", searchHandler.Search)
+	api.POST("/answers", answerHandler.Create)
 
 	if err := router.Run(":8080"); err != nil {
 		panic(err)

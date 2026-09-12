@@ -9,7 +9,7 @@ import (
 
 var (
 	ErrMissingProvider = errors.New(
-		"generation provicer is required",
+		"generation provider is required",
 	)
 	ErrUnsupportedProvider = errors.New(
 		"unsupported generation provider",
