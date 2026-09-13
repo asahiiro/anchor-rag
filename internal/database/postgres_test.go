@@ -16,8 +16,8 @@ func TestNewPostgresPoolRejectsMissingURL(t *testing.T) {
 	)
 
 	if !errors.Is(err, ErrMissingDatabaseURL) {
-		t.Fatal(
-			"expected ErrMissing DatabaseURL, got %w",
+		t.Fatalf(
+			"expected ErrMissingDatabaseURL, got %v",
 			err,
 		)
 	}
