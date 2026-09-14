@@ -4,9 +4,12 @@ import (
 	"context"
 	"errors"
 	"os"
+	"reflect"
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/pgvector/pgvector-go"
 )
 
 func TestNewPostgresPoolRejectsMissingURL(t *testing.T) {
@@ -56,5 +59,34 @@ func TestNewPostgresPoolIntegration(t *testing.T) {
 
 	if result != 1 {
 		t.Fatalf("result = %d, want 1", result)
+	}
+
+	wantVector := []float32{
+		1,
+		2,
+		3,
+	}
+
+	var gotVector pgvector.Vector
+	if err := pool.QueryRow(
+		ctx,
+		"SELECT $1::vector",
+		pgvector.NewVector(wantVector),
+	).Scan(&gotVector); err != nil {
+		t.Fatalf(
+			"vector round trip failed: %v",
+			err,
+		)
+	}
+
+	if !reflect.DeepEqual(
+		gotVector.Slice(),
+		wantVector,
+	) {
+		t.Fatalf(
+			"vector = %#v, want %#v",
+			gotVector.Slice(),
+			wantVector,
+		)
 	}
 }
