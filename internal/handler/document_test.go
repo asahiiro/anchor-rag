@@ -126,7 +126,6 @@ func TestDocumentHandlerCreateRejectsInvalidRequest(t *testing.T) {
 	router := gin.New()
 	router.POST("/api/v1/documents", documentHandler.Create)
 
-	// 缺少必填的 content 字段。
 	body := strings.NewReader(`{
 		"name": "rag-notes.md"
 	}`)
