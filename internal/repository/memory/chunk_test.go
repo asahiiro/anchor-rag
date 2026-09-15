@@ -168,3 +168,65 @@ func TestChunkRepositoryFindAll(t *testing.T) {
 		}
 	}
 }
+
+func TestChunkRepositorySearchSimilar(t *testing.T) {
+	repo := NewChunkRepository()
+
+	chunks := []domain.Chunk{
+		{
+			ID:        "exact",
+			Content:   "exact",
+			Embedding: []float32{1, 0},
+		},
+		{
+			ID:        "similar",
+			Content:   "similar",
+			Embedding: []float32{0.8, 0.2},
+		},
+		{
+			ID:        "orthogonal",
+			Content:   "orthogonal",
+			Embedding: []float32{0, 1},
+		},
+	}
+
+	if err := repo.SaveBatch(
+		context.Background(),
+		chunks,
+	); err != nil {
+		t.Fatalf("SaveBatch() returned error: %v", err)
+	}
+
+	results, err := repo.SearchSimilar(
+		context.Background(),
+		[]float32{1, 0},
+		2,
+	)
+	if err != nil {
+		t.Fatalf(
+			"SearchSimilar() returned error: %v",
+			err,
+		)
+	}
+
+	if len(results) != 2 {
+		t.Fatalf(
+			"got %d results, want 2",
+			len(results),
+		)
+	}
+
+	if results[0].Chunk.ID != "exact" {
+		t.Fatalf(
+			"first result = %q, want exact",
+			results[0].Chunk.ID,
+		)
+	}
+
+	if results[1].Chunk.ID != "similar" {
+		t.Fatalf(
+			"second result = %q, want similar",
+			results[1].Chunk.ID,
+		)
+	}
+}

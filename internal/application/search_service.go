@@ -4,13 +4,11 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"sort"
 	"strings"
 
 	"github.com/asahiiro/anchor-rag/internal/domain"
 	"github.com/asahiiro/anchor-rag/internal/embedding"
 	"github.com/asahiiro/anchor-rag/internal/repository"
-	"github.com/asahiiro/anchor-rag/internal/vector"
 )
 
 var (
@@ -26,17 +24,17 @@ var (
 )
 
 type SearchService struct {
-	chunkRepo repository.ChunkRepository
-	embedder  embedding.Embedder
+	chunkSearcher repository.ChunkSearcher
+	embedder      embedding.Embedder
 }
 
 func NewSearchService(
-	chunkRepo repository.ChunkRepository,
+	chunkSearcher repository.ChunkSearcher,
 	textEmbedder embedding.Embedder,
 ) *SearchService {
 	return &SearchService{
-		chunkRepo: chunkRepo,
-		embedder:  textEmbedder,
+		chunkSearcher: chunkSearcher,
+		embedder:      textEmbedder,
 	}
 }
 
@@ -70,46 +68,16 @@ func (s *SearchService) Search(
 		)
 	}
 
-	chunks, err := s.chunkRepo.FindAll(ctx)
+	results, err := s.chunkSearcher.SearchSimilar(
+		ctx,
+		queryEmbeddings[0],
+		limit,
+	)
 	if err != nil {
-		return nil, fmt.Errorf("find chunks: %w", err)
-	}
-
-	results := make([]domain.SearchResult, 0, len(chunks))
-
-	for _, chunk := range chunks {
-		score, err := vector.CosineSimilarity(
-			queryEmbeddings[0],
-			chunk.Embedding,
+		return nil, fmt.Errorf(
+			"search similar chunks: %w",
+			err,
 		)
-		if errors.Is(err, vector.ErrZeroVector) {
-			continue
-		}
-		if err != nil {
-			return nil, fmt.Errorf(
-				"compare chunk %s: %w",
-				chunk.ID,
-				err,
-			)
-		}
-
-		results = append(results, domain.SearchResult{
-			Chunk: chunk,
-			Score: score,
-		})
-	}
-
-	sort.Slice(results, func(left, right int) bool {
-		if results[left].Score == results[right].Score {
-			return results[left].Chunk.ID <
-				results[right].Chunk.ID
-		}
-
-		return results[left].Score > results[right].Score
-	})
-
-	if len(results) > limit {
-		results = results[:limit]
 	}
 
 	return results, nil
