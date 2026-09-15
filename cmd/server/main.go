@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"net/http"
 	"os"
 
@@ -9,15 +10,25 @@ import (
 	"github.com/asahiiro/anchor-rag/internal/embedding"
 	"github.com/asahiiro/anchor-rag/internal/generation"
 	"github.com/asahiiro/anchor-rag/internal/handler"
-	"github.com/asahiiro/anchor-rag/internal/repository/memory"
+	"github.com/asahiiro/anchor-rag/internal/storage"
 	"github.com/gin-gonic/gin"
 )
 
 func main() {
 	router := gin.Default()
 
-	documentRepo := memory.NewDocumentRepository()
-	chunkRepo := memory.NewChunkRepository()
+	dataStore, err := storage.New(
+		context.Background(),
+		storage.Config{
+			Provider:    os.Getenv("STORAGE_PROVIDER"),
+			DatabaseURL: os.Getenv("DATABASE_URL"),
+		},
+	)
+	if err != nil {
+		panic(err)
+	}
+	defer dataStore.Close()
+
 	textChunker, err := chunker.New(500, 50)
 	if err != nil {
 		panic(err)
@@ -47,13 +58,13 @@ func main() {
 	}
 
 	documentService := application.NewDocumentService(
-		documentRepo,
-		chunkRepo,
+		dataStore.DocumentRepository,
+		dataStore.ChunkRepository,
 		textChunker,
 		textEmbedder,
 	)
 	searchService := application.NewSearchService(
-		chunkRepo,
+		dataStore.ChunkSearcher,
 		textEmbedder,
 	)
 	answerService := application.NewAnswerService(
