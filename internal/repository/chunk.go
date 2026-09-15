@@ -14,3 +14,11 @@ type ChunkRepository interface {
 	) ([]domain.Chunk, error)
 	FindAll(ctx context.Context) ([]domain.Chunk, error)
 }
+
+type ChunkSearcher interface {
+	SearchSimilar(
+		ctx context.Context,
+		queryEmbedding []float32,
+		limit int,
+	) ([]domain.SearchResult, error)
+}

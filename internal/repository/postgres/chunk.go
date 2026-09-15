@@ -16,6 +16,7 @@ type ChunkRepository struct {
 }
 
 var _ repository.ChunkRepository = (*ChunkRepository)(nil)
+var _ repository.ChunkSearcher = (*ChunkRepository)(nil)
 
 func NewChunkRepository(
 	pool *pgxpool.Pool,
@@ -65,7 +66,7 @@ func (r *ChunkRepository) SaveBatch(
 					document_id = EXCLUDED.document_id,
 					content = EXCLUDED.content,
 					position = EXCLUDED.position,
-					embedding = EXCLUDED.embedding		
+					embedding = EXCLUDED.embedding
 			`,
 			chunk.ID,
 			chunk.DocumentID,
@@ -75,7 +76,7 @@ func (r *ChunkRepository) SaveBatch(
 		)
 		if err != nil {
 			return fmt.Errorf(
-				"save chunks %s: %w",
+				"save chunk %s: %w",
 				chunk.ID,
 				err,
 			)
@@ -146,7 +147,7 @@ func (r *ChunkRepository) FindAll(
 	)
 	if err != nil {
 		return nil, fmt.Errorf(
-			"find chunks by document ID: %w",
+			"find all chunks: %w",
 			err,
 		)
 	}
@@ -193,4 +194,74 @@ func collectChunks(
 	}
 
 	return chunks, nil
+}
+
+func (r *ChunkRepository) SearchSimilar(
+	ctx context.Context,
+	queryEmbedding []float32,
+	limit int,
+) ([]domain.SearchResult, error) {
+	if err := ctx.Err(); err != nil {
+		return nil, err
+	}
+
+	if limit <= 0 {
+		return nil, fmt.Errorf(
+			"search limit must be greater than zero",
+		)
+	}
+
+	rows, err := r.pool.Query(
+		ctx,
+		`
+			SELECT
+				id,
+				document_id,
+				content,
+				position,
+				1 - (embedding <=> $1) AS score
+			FROM chunks
+			ORDER BY embedding <=> $1, id
+			LIMIT $2
+		`,
+		pgvector.NewVector(queryEmbedding),
+		limit,
+	)
+	if err != nil {
+		return nil, fmt.Errorf(
+			"search similar chunks: %w",
+			err,
+		)
+	}
+	defer rows.Close()
+
+	results := make([]domain.SearchResult, 0)
+
+	for rows.Next() {
+		var result domain.SearchResult
+
+		if err := rows.Scan(
+			&result.Chunk.ID,
+			&result.Chunk.DocumentID,
+			&result.Chunk.Content,
+			&result.Chunk.Position,
+			&result.Score,
+		); err != nil {
+			return nil, fmt.Errorf(
+				"scan search result: %w",
+				err,
+			)
+		}
+
+		results = append(results, result)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf(
+			"iterate search results: %w",
+			err,
+		)
+	}
+
+	return results, nil
 }

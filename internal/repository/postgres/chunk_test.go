@@ -2,6 +2,7 @@ package postgres
 
 import (
 	"context"
+	"math"
 	"os"
 	"reflect"
 	"strings"
@@ -118,6 +119,40 @@ func TestChunkRepositoryIntegration(t *testing.T) {
 			"FindByDocumentID() = %#v, want %#v",
 			got,
 			chunks,
+		)
+	}
+
+	searchResults, err := chunkRepo.SearchSimilar(
+		ctx,
+		firstEmbedding,
+		1,
+	)
+	if err != nil {
+		t.Fatalf(
+			"SearchSimilar() returned error: %v",
+			err,
+		)
+	}
+
+	if len(searchResults) != 1 {
+		t.Fatalf(
+			"got %d search results, want 1",
+			len(searchResults),
+		)
+	}
+
+	if searchResults[0].Chunk.ID != chunks[0].ID {
+		t.Fatalf(
+			"first result ID = %q, want %q",
+			searchResults[0].Chunk.ID,
+			chunks[0].ID,
+		)
+	}
+
+	if math.Abs(searchResults[0].Score-1) > 1e-9 {
+		t.Fatalf(
+			"first result score = %v, want 1",
+			searchResults[0].Score,
 		)
 	}
 
