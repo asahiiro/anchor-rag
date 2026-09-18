@@ -26,6 +26,11 @@ func newTestDocumentHandler(
 
 	documentRepo := memory.NewDocumentRepository()
 	chunkRepo := memory.NewChunkRepository()
+	writer := memory.NewKnowledgeWriter(
+		documentRepo,
+		chunkRepo,
+	)
+
 	textChunker, err := chunker.New(5, 2)
 	if err != nil {
 		t.Fatalf("chunker.New() returned error: %v", err)
@@ -37,8 +42,7 @@ func newTestDocumentHandler(
 	}
 
 	service := application.NewDocumentService(
-		documentRepo,
-		chunkRepo,
+		writer,
 		textChunker,
 		textEmbedder,
 	)

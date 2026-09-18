@@ -24,6 +24,7 @@ type Config struct {
 type Store struct {
 	DocumentRepository repository.DocumentRepository
 	ChunkRepository    repository.ChunkRepository
+	KnowledgeWriter    repository.KnowledgeWriter
 	ChunkSearcher      repository.ChunkSearcher
 
 	close func()
@@ -47,10 +48,15 @@ func New(
 	case "", "memory":
 		documentRepo := memory.NewDocumentRepository()
 		chunkRepo := memory.NewChunkRepository()
+		knowledgeWriter := memory.NewKnowledgeWriter(
+			documentRepo,
+			chunkRepo,
+		)
 
 		return &Store{
 			DocumentRepository: documentRepo,
 			ChunkRepository:    chunkRepo,
+			KnowledgeWriter:    knowledgeWriter,
 			ChunkSearcher:      chunkRepo,
 			close:              func() {},
 		}, nil
@@ -73,6 +79,7 @@ func New(
 		return &Store{
 			DocumentRepository: documentRepo,
 			ChunkRepository:    chunkRepo,
+			KnowledgeWriter:    documentRepo,
 			ChunkSearcher:      chunkRepo,
 			close:              pool.Close,
 		}, nil

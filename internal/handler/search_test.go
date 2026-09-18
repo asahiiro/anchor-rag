@@ -31,10 +31,13 @@ func TestSearchHandler(t *testing.T) {
 	if err != nil {
 		t.Fatalf("embedding constructor returned error: %v", err)
 	}
-
-	documentService := application.NewDocumentService(
+	writer := memory.NewKnowledgeWriter(
 		documentRepo,
 		chunkRepo,
+	)
+
+	documentService := application.NewDocumentService(
+		writer,
 		textChunker,
 		textEmbedder,
 	)

@@ -21,23 +21,20 @@ var (
 )
 
 type DocumentService struct {
-	documentRepo repository.DocumentRepository
-	chunkRepo    repository.ChunkRepository
-	chunker      *chunker.Chunker
-	embedder     embedding.Embedder
+	writer   repository.KnowledgeWriter
+	chunker  *chunker.Chunker
+	embedder embedding.Embedder
 }
 
 func NewDocumentService(
-	documentRepo repository.DocumentRepository,
-	chunkRepo repository.ChunkRepository,
+	writer repository.KnowledgeWriter,
 	textChunker *chunker.Chunker,
 	textEmbedder embedding.Embedder,
 ) *DocumentService {
 	return &DocumentService{
-		documentRepo: documentRepo,
-		chunkRepo:    chunkRepo,
-		chunker:      textChunker,
-		embedder:     textEmbedder,
+		writer:   writer,
+		chunker:  textChunker,
+		embedder: textEmbedder,
 	}
 }
 
@@ -91,16 +88,13 @@ func (s *DocumentService) Create(
 		})
 	}
 
-	if err := s.documentRepo.Save(ctx, doc); err != nil {
+	if err := s.writer.SaveDocument(
+		ctx,
+		doc,
+		chunks,
+	); err != nil {
 		return domain.Document{}, fmt.Errorf(
-			"save document: %w",
-			err,
-		)
-	}
-
-	if err := s.chunkRepo.SaveBatch(ctx, chunks); err != nil {
-		return domain.Document{}, fmt.Errorf(
-			"save chunks: %w",
+			"save document with chunks: %w",
 			err,
 		)
 	}

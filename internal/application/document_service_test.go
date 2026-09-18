@@ -23,9 +23,13 @@ func TestDocumentServiceCreate(t *testing.T) {
 		t.Fatalf("embedding constructor returned error: %v", err)
 	}
 
-	service := NewDocumentService(
+	writer := memory.NewKnowledgeWriter(
 		documentRepo,
 		chunkRepo,
+	)
+
+	service := NewDocumentService(
+		writer,
 		textChunker,
 		textEmbedder,
 	)
@@ -141,9 +145,13 @@ func TestDocumentServiceRejectsInvalidDocument(t *testing.T) {
 		t.Fatalf("embedding constructor returned error: %v", err)
 	}
 
-	service := NewDocumentService(
+	writer := memory.NewKnowledgeWriter(
 		documentRepo,
 		chunkRepo,
+	)
+
+	service := NewDocumentService(
+		writer,
 		textChunker,
 		textEmbedder,
 	)

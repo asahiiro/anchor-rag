@@ -58,8 +58,7 @@ func main() {
 	}
 
 	documentService := application.NewDocumentService(
-		dataStore.DocumentRepository,
-		dataStore.ChunkRepository,
+		dataStore.KnowledgeWriter,
 		textChunker,
 		textEmbedder,
 	)
