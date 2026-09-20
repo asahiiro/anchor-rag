@@ -18,24 +18,45 @@ var (
 	ErrEmbeddingCountMismatch = errors.New(
 		"embedding count does not match chunk count",
 	)
+	ErrInvalidDocumentID = errors.New(
+		"invalid document ID",
+	)
 )
 
 type DocumentService struct {
 	writer   repository.KnowledgeWriter
+	reader   repository.DocumentReader
+	deleter  repository.KnowledgeDeleter
 	chunker  *chunker.Chunker
 	embedder embedding.Embedder
 }
 
 func NewDocumentService(
 	writer repository.KnowledgeWriter,
+	reader repository.DocumentReader,
+	deleter repository.KnowledgeDeleter,
 	textChunker *chunker.Chunker,
 	textEmbedder embedding.Embedder,
 ) *DocumentService {
 	return &DocumentService{
 		writer:   writer,
+		reader:   reader,
+		deleter:  deleter,
 		chunker:  textChunker,
 		embedder: textEmbedder,
 	}
+}
+
+func validateDocumentID(id string) error {
+	if _, err := uuid.Parse(id); err != nil {
+		return fmt.Errorf(
+			"%w: %v",
+			ErrInvalidDocumentID,
+			err,
+		)
+	}
+
+	return nil
 }
 
 func (s *DocumentService) Create(
@@ -100,4 +121,47 @@ func (s *DocumentService) Create(
 	}
 
 	return doc, nil
+}
+
+func (s *DocumentService) Get(
+	ctx context.Context,
+	id string,
+) (domain.Document, error) {
+	if err := validateDocumentID(id); err != nil {
+		return domain.Document{}, err
+	}
+
+	doc, err := s.reader.FindByID(
+		ctx,
+		id,
+	)
+	if err != nil {
+		return domain.Document{}, fmt.Errorf(
+			"find document: %w",
+			err,
+		)
+	}
+
+	return doc, nil
+}
+
+func (s *DocumentService) Delete(
+	ctx context.Context,
+	id string,
+) error {
+	if err := validateDocumentID(id); err != nil {
+		return err
+	}
+
+	if err := s.deleter.DeleteDocument(
+		ctx,
+		id,
+	); err != nil {
+		return fmt.Errorf(
+			"delete document: %w",
+			err,
+		)
+	}
+
+	return nil
 }

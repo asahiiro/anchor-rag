@@ -18,6 +18,7 @@ type DocumentRepository struct {
 
 var _ repository.DocumentRepository = (*DocumentRepository)(nil)
 var _ repository.KnowledgeWriter = (*DocumentRepository)(nil)
+var _ repository.KnowledgeDeleter = (*DocumentRepository)(nil)
 
 func NewDocumentRepository(
 	pool *pgxpool.Pool,
@@ -202,4 +203,31 @@ func (r *DocumentRepository) FindByID(
 	}
 
 	return doc, nil
+}
+
+func (r *DocumentRepository) DeleteDocument(
+	ctx context.Context,
+	id string,
+) error {
+	if err := ctx.Err(); err != nil {
+		return err
+	}
+
+	commandTag, err := r.pool.Exec(
+		ctx,
+		"DELETE FROM documents WHERE id = $1",
+		id,
+	)
+	if err != nil {
+		return fmt.Errorf(
+			"delete document: %w",
+			err,
+		)
+	}
+
+	if commandTag.RowsAffected() == 0 {
+		return repository.ErrDocumentNotFound
+	}
+
+	return nil
 }

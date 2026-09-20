@@ -59,6 +59,8 @@ func main() {
 
 	documentService := application.NewDocumentService(
 		dataStore.KnowledgeWriter,
+		dataStore.DocumentRepository,
+		dataStore.KnowledgeDeleter,
 		textChunker,
 		textEmbedder,
 	)
@@ -82,6 +84,8 @@ func main() {
 	})
 	api := router.Group("/api/v1")
 	api.POST("/documents", documentHandler.Create)
+	api.GET("/documents/:id", documentHandler.Get)
+	api.DELETE("/documents/:id", documentHandler.Delete)
 	api.POST("/retrievals", searchHandler.Search)
 	api.POST("/answers", answerHandler.Create)
 

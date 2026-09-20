@@ -13,3 +13,10 @@ type DocumentRepository interface {
 	Save(ctx context.Context, doc domain.Document) error
 	FindByID(ctx context.Context, id string) (domain.Document, error)
 }
+
+type DocumentReader interface {
+	FindByID(
+		ctx context.Context,
+		id string,
+	) (domain.Document, error)
+}

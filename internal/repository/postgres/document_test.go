@@ -136,6 +136,41 @@ func TestDocumentRepositoryIntegration(t *testing.T) {
 			chunks[0].ID,
 		)
 	}
+
+	err = documentRepo.DeleteDocument(
+		ctx,
+		doc.ID,
+	)
+	if err != nil {
+		t.Fatalf("DeleteDocument() returned error: %v", err)
+	}
+
+	_, err = documentRepo.FindByID(
+		ctx,
+		doc.ID,
+	)
+	if !errors.Is(err, repository.ErrDocumentNotFound) {
+		t.Fatalf(
+			"expected ErrDocumentNotFound, got %v",
+			err,
+		)
+	}
+
+	storedChunks, err = chunkRepo.FindByDocumentID(
+		ctx,
+		doc.ID,
+	)
+	if err != nil {
+		t.Fatalf("FindByDocumentID() returned error: %v", err)
+	}
+
+	if len(storedChunks) != 0 {
+		t.Fatalf(
+			"stored chunk count = %d, want 0",
+			len(storedChunks),
+		)
+	}
+
 }
 
 func TestDocumentRepositorySaveDocumentRollsBack(

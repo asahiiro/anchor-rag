@@ -35,9 +35,15 @@ func TestSearchHandler(t *testing.T) {
 		documentRepo,
 		chunkRepo,
 	)
+	deleter := memory.NewKnowledgeDeleter(
+		documentRepo,
+		chunkRepo,
+	)
 
 	documentService := application.NewDocumentService(
 		writer,
+		documentRepo,
+		deleter,
 		textChunker,
 		textEmbedder,
 	)

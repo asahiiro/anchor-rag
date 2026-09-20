@@ -13,3 +13,10 @@ type KnowledgeWriter interface {
 		chunks []domain.Chunk,
 	) error
 }
+
+type KnowledgeDeleter interface {
+	DeleteDocument(
+		ctx context.Context,
+		id string,
+	) error
+}

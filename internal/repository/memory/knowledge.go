@@ -12,13 +12,29 @@ type KnowledgeWriter struct {
 	chunkRepo    *ChunkRepository
 }
 
+type KnowledgeDeleter struct {
+	documentRepo *DocumentRepository
+	chunkRepo    *ChunkRepository
+}
+
 var _ repository.KnowledgeWriter = (*KnowledgeWriter)(nil)
+var _ repository.KnowledgeDeleter = (*KnowledgeDeleter)(nil)
 
 func NewKnowledgeWriter(
 	documentRepo *DocumentRepository,
 	chunkRepo *ChunkRepository,
 ) *KnowledgeWriter {
 	return &KnowledgeWriter{
+		documentRepo: documentRepo,
+		chunkRepo:    chunkRepo,
+	}
+}
+
+func NewKnowledgeDeleter(
+	documentRepo *DocumentRepository,
+	chunkRepo *ChunkRepository,
+) *KnowledgeDeleter {
+	return &KnowledgeDeleter{
 		documentRepo: documentRepo,
 		chunkRepo:    chunkRepo,
 	}
@@ -47,6 +63,30 @@ func (w *KnowledgeWriter) SaveDocument(
 			chunk,
 		)
 	}
+
+	return nil
+}
+
+func (d *KnowledgeDeleter) DeleteDocument(
+	ctx context.Context,
+	id string,
+) error {
+	if err := ctx.Err(); err != nil {
+		return err
+	}
+
+	d.documentRepo.mu.Lock()
+	d.chunkRepo.mu.Lock()
+
+	defer d.chunkRepo.mu.Unlock()
+	defer d.documentRepo.mu.Unlock()
+
+	if _, ok := d.documentRepo.documents[id]; !ok {
+		return repository.ErrDocumentNotFound
+	}
+
+	delete(d.documentRepo.documents, id)
+	delete(d.chunkRepo.chunksByDocument, id)
 
 	return nil
 }

@@ -25,6 +25,7 @@ type Store struct {
 	DocumentRepository repository.DocumentRepository
 	ChunkRepository    repository.ChunkRepository
 	KnowledgeWriter    repository.KnowledgeWriter
+	KnowledgeDeleter   repository.KnowledgeDeleter
 	ChunkSearcher      repository.ChunkSearcher
 
 	close func()
@@ -52,11 +53,16 @@ func New(
 			documentRepo,
 			chunkRepo,
 		)
+		knowledgeDeleter := memory.NewKnowledgeDeleter(
+			documentRepo,
+			chunkRepo,
+		)
 
 		return &Store{
 			DocumentRepository: documentRepo,
 			ChunkRepository:    chunkRepo,
 			KnowledgeWriter:    knowledgeWriter,
+			KnowledgeDeleter:   knowledgeDeleter,
 			ChunkSearcher:      chunkRepo,
 			close:              func() {},
 		}, nil
@@ -80,6 +86,7 @@ func New(
 			DocumentRepository: documentRepo,
 			ChunkRepository:    chunkRepo,
 			KnowledgeWriter:    documentRepo,
+			KnowledgeDeleter:   documentRepo,
 			ChunkSearcher:      chunkRepo,
 			close:              pool.Close,
 		}, nil
