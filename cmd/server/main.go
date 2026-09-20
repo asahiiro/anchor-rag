@@ -83,11 +83,19 @@ func main() {
 		})
 	})
 	api := router.Group("/api/v1")
-	api.POST("/documents", documentHandler.Create)
-	api.GET("/documents/:id", documentHandler.Get)
-	api.DELETE("/documents/:id", documentHandler.Delete)
-	api.POST("/retrievals", searchHandler.Search)
-	api.POST("/answers", answerHandler.Create)
+	api.POST("/documents",
+		documentHandler.Create)
+	api.POST("/documents/upload",
+		documentHandler.Upload)
+	api.GET("/documents/:id",
+		documentHandler.Get)
+	api.DELETE("/documents/:id",
+		documentHandler.Delete)
+
+	api.POST("/retrievals",
+		searchHandler.Search)
+	api.POST("/answers",
+		answerHandler.Create)
 
 	if err := router.Run(":8080"); err != nil {
 		panic(err)

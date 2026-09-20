@@ -44,10 +44,22 @@ func (h *DocumentHandler) Create(c *gin.Context) {
 		return
 	}
 
-	doc, err := h.service.Create(
-		c.Request.Context(),
+	h.createDocument(
+		c,
 		req.Name,
 		req.Content,
+	)
+}
+
+func (h *DocumentHandler) createDocument(
+	c *gin.Context,
+	name string,
+	content string,
+) {
+	doc, err := h.service.Create(
+		c.Request.Context(),
+		name,
+		content,
 	)
 
 	if errors.Is(err, application.ErrInvalidDocument) {
@@ -56,6 +68,7 @@ func (h *DocumentHandler) Create(c *gin.Context) {
 		})
 		return
 	}
+
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error": "failed to create document",
@@ -64,7 +77,6 @@ func (h *DocumentHandler) Create(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusCreated, doc)
-
 }
 
 func (h *DocumentHandler) Get(c *gin.Context) {
